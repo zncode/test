@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Ssocket</title>
+   <!-- <script type="text/javascript" src="http://192.168.253.3/socket.io/socket.io.js"></script>     -->
+</head>
+
+<body>
+<button id="ping" value="Ping" >Ping</button>
+<button id="create_room">Create Room</button>
+    <script type="text/javascript">
+
+    function EventEmitter() {
+        this.events = {};
+    }
+
+    EventEmitter.prototype.on = function(eventName, callback) {
+        this.events[eventName] = this.events[eventName] || [];
+        this.events[eventName].push(callback);
+    };
+
+    EventEmitter.prototype.emit = function(eventName, _) {
+        var events = this.events[eventName],
+            args = Array.prototype.slice.call(arguments, 1),
+            i, m;
+
+       if (!events) {
+            return;
+        }
+       for (i = 0, m = events.length; i < m; i++) {
+             console.log( "触发事件:" + m + ":" + i + ":" + eventName );
+           events[i].apply(null, args);
+        }
+    };
+
+    function msg() {
+        this.userid = null;
+    }
+
+    msg.prototype = new EventEmitter();
+
+    msg.prototype.on('__ping', function(data) {
+      console.log( "Client __ping  成功!");
+    });
+
+      //var socket = io.connect('http://192.168.253.3:5000');   
+      var server = "ws:192.168.11.189:5000";
+      socket = new WebSocket(server);
+
+
+      socket.onopen = function() {
+        socket.send(JSON.stringify({
+        "eventName":　"__connect",
+        "data": {
+          "sessionid": "05ju0eda2d09ogukbvf6igg3s6",    
+        }
+        }));     
+      };
+
+      socket.onmessage = function(message) {
+        var json = JSON.parse(message.data);
+        if (json.eventName) {
+          console.log( "接收消息: " + json.eventName + ":" + JSON.stringify( json.data ) );
+          msg.prototype.emit(json.eventName, json.data);
+        } else {
+          console.log( "接收消息: " + JSON.stringify( message ) );
+          that.emit("socket_receive_message:", socket, json);
+        }
+      };
+
+      socket.onerror = function(error) {
+        that.emit("socket_error", error, socket);
+        console.log( "socket.onerror:" + JSON.stringify( error ) );
+      };
+
+      socket.onclose = function(data) {
+        // that.localMediaStream.close();
+        // var pcs = that.peerConnections;
+        // for (i = pcs.length; i--;) {
+        //   that.closePeerConnection(pcs[i]);
+        // }
+        // that.peerConnections = [];
+        // that.dataChannels = {};
+        // that.fileChannels = {};
+        // that.connections = [];
+        // that.fileData = {};
+          console.log( "socket.onclose:" + JSON.stringify( data ) );
+      //  that.emit('socket_closed', socket);
+      };
+
+      // socket.on('news', function (data) {    
+      //   alert(data.hello);
+      //   socket.emit('message', { my: 'data' });
+      // });
+
+      var pingBtn = document.getElementById("ping");
+      var createRoomBtn = document.getElementById("create_room");
+
+      pingBtn.onclick = function(){
+          socket.send(JSON.stringify({
+          "eventName":　"__ping",
+          "data": {
+            "uid": 123456,
+            "appid": 123456789,     
+          }
+          }));           
+      };
+      createRoomBtn.onclick = function(){
+          socket.send(JSON.stringify({
+          "eventName":　"__createRoom",
+          "data": {
+            "uid": 123456,
+            "appid": 123456789,     
+          }
+          }));           
+      };
+
+    </script>
+    
+</body>
+</html>
